@@ -1,0 +1,31 @@
+{% extends "app/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <h1 class="text-3xl font-bold mb-6">Messages</h1>
+    
+    {% if messages %}
+        <div class="space-y-4">
+            {% for message in messages %}
+                <div class="bg-white shadow-md rounded-lg p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold">From: {{ message.name }}</h2>
+                        <span class="text-sm text-gray-500">{{ message.created_at|date:"F j, Y, g:i a" }}</span>
+                    </div>
+                    <p class="text-gray-700 mb-4">{{ message.message }}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">{{ message.email }}</span>
+                        <a href="{% url 'app:reply_messages' user.username message.id %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            Reply
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-xl text-gray-700">You have no messages yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

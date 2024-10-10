@@ -1,0 +1,114 @@
+{% extends "app/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div class="md:col-span-2">
+        <h1 class="text-3xl font-bold mb-4">{{ user.get_full_name }}</h1>
+        {% if user.profile_picture %}
+        <img class="w-full h-48 object-cover my-2" src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}'s profile picture">
+        {% endif %}
+        <p class="mb-4">{{ user.bio }}</p>
+
+        <h2 class="text-2xl font-bold mb-4">Projects</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for project in user.project_set.all %}
+            <div class="bg-white p-4 rounded shadow">
+                <h3 class="text-xl font-bold">{{ project.title }}</h3>
+                <p class="text-sm text-gray-600">{{ project.category }}</p>
+                {% if project.image %}
+                <img src="{{ project.image.url }}" alt="{{ project.title }}" class="w-full h-48 object-cover my-2">
+                {% endif %}
+                <p class="mt-2">{{ project.description }}</p>
+                <a href="{{ project.project_url }}" target="_blank" class="text-blue-600 hover:underline">View Project</a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <h2 class="text-2xl font-bold mt-8 mb-4">Skills</h2>
+        <ul class="list-disc list-inside">
+            {% for skill in user.skill_set.all %}
+            <li>{{ skill.name }}{% if skill.details %} - {{ skill.details }}{% endif %}</li>
+            {% endfor %}
+        </ul>
+
+        <h2 class="text-2xl font-bold mt-8 mb-4">Testimonials</h2>
+        <div class="space-y-4">
+            {% for testimonial in user.testimonial_set.all %}
+            <div class="bg-white p-4 rounded shadow">
+                <p class="italic">"{{ testimonial.details }}"</p>
+                <p class="text-right mt-2">- {{ testimonial.name }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div>
+        <h2 class="text-2xl font-bold mb-4">Contact Me</h2>
+        <form id="contact-form" method="post" x-data="{ submitting: false }" @submit.prevent="submitForm()">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label for="{{ form.name.id_for_label }}" class="block text-gray-700 font-bold mb-2">Name</label>
+                {{ form.name }}
+            </div>
+            <div class="mb-4">
+                <label for="{{ form.email.id_for_label }}" class="block text-gray-700 font-bold mb-2">Email</label>
+                {{ form.email }}
+            </div>
+            <div class="mb-4">
+                <label for="{{ form.message.id_for_label }}" class="block text-gray-700 font-bold mb-2">Message</label>
+                {{ form.message }}
+            </div>
+            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" x-bind:disabled="submitting">
+                <span x-show="!submitting">Send Message</span>
+                <span x-show="submitting">Sending...</span>
+            </button>
+        </form>
+        <div id="form-success" class="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative hidden" role="alert">
+            <span class="block sm:inline">Your message was sent successfully!</span>
+        </div>
+        <div id="form-error" class="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative hidden" role="alert">
+            <span class="block sm:inline">There was an error sending your message. Please try again.</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function submitForm() {
+        const form = document.getElementById('contact-form');
+        const formData = new FormData(form);
+        const url = "{% url 'app:user_portfolio' user.username %}";
+
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('form-success').classList.remove('hidden');
+                document.getElementById('form-error').classList.add('hidden');
+                form.reset();
+            } else {
+                document.getElementById('form-error').classList.remove('hidden');
+                document.getElementById('form-success').classList.add('hidden');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('form-error').classList.remove('hidden');
+            document.getElementById('form-success').classList.add('hidden');
+        })
+        .finally(() => {
+            this.submitting = false;
+        });
+    }
+</script>
+{% endblock %}
